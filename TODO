@@ -1,0 +1,7 @@
+NECESSARY:
+- togliere i prodotto comprati da quelli in stock
+- aggiungere una tabella con il costo finale in /cart
+- fare in modi che se si va nel carrello è vuoto, te lo dice
+
+MORE:
+- fare in modo che se si passa dal carrello a un altro percorso e si ritorna gli oggetti rimangono selezionati
