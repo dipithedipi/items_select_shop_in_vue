@@ -1,7 +1,7 @@
 <template>
   <div style="position: absolute; top: 0; right: 0; padding: 20px;">
     <!-- <router-link :to="{ name: 'cart', params: { selectedItems: selected } }"> -->
-      <v-btn v-if="selected.length > 0" @click="gotoCart" color="blue" dark>Buy the products</v-btn>
+      <v-btn v-if="selected.length > 0" @click="gotoCart" color="blue" dark>Go to the cart</v-btn>
     <!-- </router-link> -->
   </div>
   
@@ -13,6 +13,7 @@
     :items="items" 
     items-per-page="5"
     :item-key="item => item.id"
+    :item-selectable="item => item.stock > 0"
     return-object
     show-select
     >
@@ -49,31 +50,72 @@ export default {
     return {
       items: [],
       selected: [],
-    }
+    };
   },
   methods: {
-    getProducts() {
-      fetch('https://fakestoreapi.com/products')
-        .then((res) => res.json())
-        .then((json) => {
-          this.items = json
-          this.items.forEach(item => {
-            item.stock = Math.floor(Math.random() * 100);
+    async getProducts() {
+      try {
+        const apiPromise = fetch('https://fakestoreapi.com/products')
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Failed to fetch products from API');
+            }
+            return response.json();
           });
-          localStorage.setItem('items', JSON.stringify(this.items));
-        })
+
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('API request timed out')), 2000);
+        });
+
+        // Use Promise.race to wait for either the API response or the timeout
+        const json = await Promise.race([apiPromise, timeoutPromise]);
+
+        this.items = json;
+
+        this.items.forEach(item => {
+          item.stock = Math.floor(Math.random() * 100);
+        });
+
+        localStorage.setItem('items', JSON.stringify(this.items));
+        console.log("Items from API");
+      } catch (error) {
+        // Handle error: try reading from file
+        this.readFromFile();
+      }
     },
     gotoCart() {
-      localStorage.setItem('selectedItems', JSON.stringify(this.selected));
+      if(JSON.parse(localStorage.getItem('selectedItems'))) {
+        let oldSelected = JSON.parse(localStorage.getItem('selectedItems'));
+        oldSelected.forEach(oldSelectedItem => {
+          this.selected.push(oldSelectedItem);
+        });
+        localStorage.setItem('selectedItems', JSON.stringify(this.selected));
+      } else {
+        localStorage.setItem('selectedItems', JSON.stringify(this.selected));
+      }
+
       this.$router.push({ name: 'cart' });
+    },
+    readFromFile() {
+      fetch('./response.json')
+        .then(response => response.json())
+        .then(data => {
+          this.items = data;
+          console.log('Items read from file');
+          localStorage.setItem('items', JSON.stringify(this.items));
+        })
+        .catch(error => console.error('Error:', error));
     },
   },
   mounted() {
-    if(localStorage.getItem('items')){
+    if (localStorage.getItem('items')) {
       this.items = JSON.parse(localStorage.getItem('items'));
+      console.log('Items from local storage');
+      // console.log("Items:")
+      // console.log(this.items)
     } else {
       this.getProducts();
     }
   },
-}
+};
 </script>

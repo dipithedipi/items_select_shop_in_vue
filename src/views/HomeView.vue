@@ -55,14 +55,22 @@ export default {
     }
   },
   methods: {
-    getProdotti() {
+    getProducts() {
       fetch('https://fakestoreapi.com/products')
-        .then((res) => res.json())
-        .then((json) => this.prodotti = json)
+      .then((res) => res.json())
+      .then((json) => {
+        this.prodotti = json
+        console.log("items from API")
+      })
     }
   },
   mounted() {
-    this.getProdotti();
+    if (localStorage.getItem('items')) {
+      this.prodotti = JSON.parse(localStorage.getItem('items'));
+      console.log('Items from local storage');
+    } else {
+      this.getProducts();
+    }
   },
   reserve() {
     this.loading = true
