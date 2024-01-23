@@ -26,6 +26,8 @@
       <router-link to="/table">add new product</router-link>
     </h2>
 
+    <h3 v-if="selected.length > 0">Total: {{ totalPrice() }}€</h3>
+
     <v-btn v-if="selected.length > 0" @click="buySelectedProducts" color="red" dark class="mr-2">Buy the
       products</v-btn>
     <v-btn v-if="selected.length > 0" @click="clearCart" color="blue" dark>Clear</v-btn>
@@ -47,6 +49,11 @@ export default {
     }
   },
   methods: {
+    totalPrice() {
+      return this.selected.reduce((total, item) => {
+        return total + item.price * item.quantity;
+      }, 0);
+    },
     buySelectedProducts() {
       alert('Thank you for your purchase!');
       for (const item of this.selected) {
@@ -76,11 +83,18 @@ export default {
       this.updateSelectedItems(item.id, item.quantity);
     },
     decrementQuantity(item) {
-      
       if (item.quantity > 1) {
         item.quantity--;
         this.updateSelectedItems(item.id, item.quantity);
+      } else if (item.quantity === 1) {
+        if (window.confirm('Are you sure to remove this product from the cart?')) {
+          this.clearItemFromCart(item.id);
+        }
       }
+    },
+    clearItemFromCart(itemId) {
+      this.selected = this.selected.filter((i) => i.id !== itemId);
+      localStorage.setItem('selectedItems', JSON.stringify(this.selected));
     },
     removeDuplicate() {
       const uniqueItems = [];
